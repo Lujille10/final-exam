@@ -11,7 +11,6 @@ require_once __DIR__ . '/../../public/database.config.php';
 $pc            = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 $totalProducts = $pc->getTotalProducts();
 $lowStock      = $pc->getLowStock(5);
-$totalValue    = $pc->getTotalValue();
 $categories    = $pc->getCategories();
 $recentProducts = array_slice($pc->getAll(), 0, 5);
 

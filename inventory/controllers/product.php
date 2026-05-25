@@ -8,7 +8,7 @@ class ProductController {
   }
   function add($name, $description, $quantity, $price, $category) {
     $stmt = $this->conn->prepare("INSERT INTO products (name, description, quantity, price, category) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssiis", $name, $description, $quantity, $price, $category);
+    $stmt->bind_param("ssiis", $name, $description, $quantity, $category);
     $result = $stmt->execute(); $stmt->close(); return $result;
   }
   function getAll() {
@@ -24,7 +24,7 @@ class ProductController {
   }
   function update($id, $name, $description, $quantity, $price, $category) {
     $stmt = $this->conn->prepare("UPDATE products SET name=?, description=?, quantity=?, price=?, category=? WHERE id=?");
-    $stmt->bind_param("ssiisi", $name, $description, $quantity, $price, $category, $id);
+    $stmt->bind_param("ssiisi", $name, $description, $quantity, $category, $id);
     $result = $stmt->execute(); $stmt->close(); return $result;
   }
   function delete($id) {
@@ -40,10 +40,7 @@ class ProductController {
     $stmt->bind_param("i", $threshold); $stmt->execute();
     $result = $stmt->get_result(); return $result->fetch_assoc()['total'];
   }
-  function getTotalValue() {
-    $result = $this->conn->query("SELECT SUM(quantity * price) as total FROM products");
-    return $result->fetch_assoc()['total'] ?? 0;
-  }
+ 
   function getCategories() {
     $result = $this->conn->query("SELECT DISTINCT category FROM products");
     $cats = [];

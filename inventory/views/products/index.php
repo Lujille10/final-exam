@@ -41,7 +41,6 @@ if (isset($_GET['add'])) {
     $view = 'add';
 } elseif (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
     $view = 'edit';
-    // Fetch with location
     $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
     $stmt->bind_param("i", $_GET['edit']);
     $stmt->execute();
@@ -52,7 +51,6 @@ if (isset($_GET['add'])) {
 
 // ── DELETE ────────────────────────────────────────────────
 if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    // Get name before delete
     $stmt = $conn->prepare("SELECT name FROM products WHERE id = ?");
     $stmt->bind_param("i", $_GET['delete']);
     $stmt->execute();
@@ -75,7 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $quantity    = (int)($_POST['quantity'] ?? 0);
-    $price       = (float)($_POST['price'] ?? 0);
     $category    = trim($_POST['category'] ?? '');
     $location    = trim($_POST['location'] ?? '');
 
@@ -83,9 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $errors = "Equipment name and category are required.";
         $view = 'add';
     } else {
-        // Insert with location column
-        $stmt2 = $conn->prepare("INSERT INTO products (name, description, quantity, price, category, location) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt2->bind_param("ssidss", $name, $description, $quantity, $price, $category, $location);
+        $stmt2 = $conn->prepare("INSERT INTO products (name, description, quantity, category, location) VALUES (?, ?, ?, ?, ?)");
+        $stmt2->bind_param("ssiss", $name, $description, $quantity, $category, $location);
         $result = $stmt2->execute();
         $stmt2->close();
 
@@ -107,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
     $name        = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $quantity    = (int)($_POST['quantity'] ?? 0);
-    $price       = (float)($_POST['price'] ?? 0);
     $category    = trim($_POST['category'] ?? '');
     $location    = trim($_POST['location'] ?? '');
 
@@ -120,8 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $editProduct = $stmt->get_result()->fetch_assoc();
         $stmt->close();
     } else {
-        $stmt2 = $conn->prepare("UPDATE products SET name=?, description=?, quantity=?, price=?, category=?, location=? WHERE id=?");
-        $stmt2->bind_param("ssidssi", $name, $description, $quantity, $price, $category, $location, $id);
+        $stmt2 = $conn->prepare("UPDATE products SET name=?, description=?, quantity=?, category=?, location=? WHERE id=?");
+        $stmt2->bind_param("ssissi", $name, $description, $quantity, $category, $location, $id);
         $result = $stmt2->execute();
         $stmt2->close();
 
@@ -147,7 +142,6 @@ $search     = trim($_GET['search'] ?? '');
 $cat_filter = $_GET['category'] ?? '';
 $st_filter  = $_GET['status'] ?? '';
 
-// Fetch all products with location
 $allResult = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
 $products = [];
 while ($row = $allResult->fetch_assoc()) { $products[] = $row; }
@@ -190,29 +184,25 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <!-- ══ ADD EQUIPMENT ══ -->
 <?php if ($view === 'add'): ?>
 <div class="page-header">
-  <div>
-    <h1>Add New Equipment</h1>
-    
-  </div>
+  <div><h1>Add New Equipment</h1></div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 340px;gap:1.2rem;align-items:start;">
   <div class="form-card">
-    <div class="form-card-header">
-      <h1>Equipment Details</h1>
-     
-    </div>
+    <div class="form-card-header"><h1>Equipment Details</h1></div>
     <form method="POST" class="form-card-body">
       <input type="hidden" name="form_action" value="add">
       <div class="form-row">
         <div class="form-group">
           <label>Equipment Name *</label>
-          <input type="text" name="name" class="form-control" placeholder="Enter equipment name" required value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
+          <input type="text" name="name" class="form-control" placeholder="Enter equipment name" required
+                 value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
         </div>
         <div class="form-group">
           <label>Description (Optional)</label>
-          <input type="text" name="description" class="form-control" placeholder="Enter description..." value="<?= htmlspecialchars($_POST['description'] ?? '') ?>">
+          <input type="text" name="description" class="form-control" placeholder="Enter description..."
+                 value="<?= htmlspecialchars($_POST['description'] ?? '') ?>">
         </div>
       </div>
       <div class="form-group">
@@ -224,12 +214,10 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Quantity *</label>
-          <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required value="<?= htmlspecialchars($_POST['quantity'] ?? '0') ?>">
-        </div>
-      
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required
+               value="<?= htmlspecialchars($_POST['quantity'] ?? '0') ?>">
       </div>
       <div class="form-group">
         <label>Location</label>
@@ -267,16 +255,12 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <!-- ══ EDIT EQUIPMENT ══ -->
 <?php elseif ($view === 'edit' && $editProduct): ?>
 <div class="page-header">
-  <div>
-    <h1>Edit Equipment</h1>
-    
-  </div>
+  <div><h1>Edit Equipment</h1></div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
 <div class="form-card" style="max-width:700px;">
   <div class="form-card-header">
     <h1>Update: <?= htmlspecialchars($editProduct['name']) ?></h1>
-    
   </div>
   <form method="POST" class="form-card-body">
     <input type="hidden" name="form_action" value="edit">
@@ -284,11 +268,13 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
     <div class="form-row">
       <div class="form-group">
         <label>Equipment Name *</label>
-        <input type="text" name="name" class="form-control" required value="<?= htmlspecialchars($_POST['name'] ?? $editProduct['name']) ?>">
+        <input type="text" name="name" class="form-control" required
+               value="<?= htmlspecialchars($_POST['name'] ?? $editProduct['name']) ?>">
       </div>
       <div class="form-group">
         <label>Description</label>
-        <input type="text" name="description" class="form-control" value="<?= htmlspecialchars($_POST['description'] ?? $editProduct['description']) ?>">
+        <input type="text" name="description" class="form-control"
+               value="<?= htmlspecialchars($_POST['description'] ?? $editProduct['description']) ?>">
       </div>
     </div>
     <div class="form-row">
@@ -302,31 +288,27 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
       </div>
       <div class="form-group">
         <label>Quantity *</label>
-        <input type="number" name="quantity" class="form-control" min="0" required value="<?= htmlspecialchars($_POST['quantity'] ?? $editProduct['quantity']) ?>">
+        <input type="number" name="quantity" class="form-control" min="0" required
+               value="<?= htmlspecialchars($_POST['quantity'] ?? $editProduct['quantity']) ?>">
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Price (₱) *</label>
-        <input type="number" name="price" class="form-control" min="0" step="0.01" required value="<?= htmlspecialchars($_POST['price'] ?? $editProduct['price']) ?>">
-      </div>
-      <div class="form-group">
-        <label>Location</label>
-        <select name="location" class="form-control">
-          <option value="">— Select Location —</option>
-          <?php
-          $locations = ['Storage A','Storage B','Storage C','Boat 1','Boat 2','Lab Room','Harbor','Dive Room','Equipment Bay','Field Station'];
-          $selLoc = $_POST['location'] ?? $editProduct['location'] ?? '';
-          foreach ($locations as $loc): ?>
-          <option value="<?= htmlspecialchars($loc) ?>" <?= $selLoc === $loc ? 'selected' : '' ?>><?= htmlspecialchars($loc) ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
+    <div class="form-group">
+      <label>Location</label>
+      <select name="location" class="form-control">
+        <option value="">— Select Location —</option>
+        <?php
+        $locations = ['Storage A','Storage B','Storage C','Boat 1','Boat 2','Lab Room','Harbor','Dive Room','Equipment Bay','Field Station'];
+        $selLoc = $_POST['location'] ?? $editProduct['location'] ?? '';
+        foreach ($locations as $loc): ?>
+        <option value="<?= htmlspecialchars($loc) ?>" <?= $selLoc === $loc ? 'selected' : '' ?>><?= htmlspecialchars($loc) ?></option>
+        <?php endforeach; ?>
+      </select>
     </div>
     <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
       <button type="submit" class="btn btn-warning">💾 Update Equipment</button>
       <a href="?" class="btn btn-secondary">Cancel</a>
-      <a href="?delete=<?= $editProduct['id'] ?>" class="btn btn-danger" style="margin-left:auto;" onclick="return confirm('Delete this equipment permanently?')">🗑 Delete</a>
+      <a href="?delete=<?= $editProduct['id'] ?>" class="btn btn-danger" style="margin-left:auto;"
+         onclick="return confirm('Delete this equipment permanently?')">🗑 Delete</a>
     </div>
   </form>
 </div>
@@ -334,10 +316,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <!-- ══ EQUIPMENT LIST ══ -->
 <?php else: ?>
 <div class="page-header">
-  <div>
-    <h1>All Equipment</h1>
-    
-  </div>
+  <div><h1>All Equipment</h1></div>
   <a href="?add=1" class="btn btn-primary">+ Add Equipment</a>
 </div>
 
@@ -356,8 +335,8 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
     <select name="status" class="filter-select">
       <option value="">All Statuses</option>
       <option value="available" <?= $st_filter === 'available' ? 'selected' : '' ?>>Available</option>
-      <option value="low" <?= $st_filter === 'low' ? 'selected' : '' ?>>Low Stock</option>
-      <option value="out" <?= $st_filter === 'out' ? 'selected' : '' ?>>Out of Stock</option>
+      <option value="low"       <?= $st_filter === 'low'       ? 'selected' : '' ?>>Low Stock</option>
+      <option value="out"       <?= $st_filter === 'out'       ? 'selected' : '' ?>>Out of Stock</option>
     </select>
     <button type="submit" class="btn btn-secondary">🔽 Filter</button>
     <a href="?" class="btn btn-secondary">Clear</a>
@@ -400,7 +379,8 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
           <td>
             <div class="action-btns">
               <a href="?edit=<?= $p['id'] ?>" class="btn btn-warning btn-sm">✏️</a>
-              <a href="?delete=<?= $p['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Delete \'<?= htmlspecialchars(addslashes($p['name'])) ?>\'?')">🗑</a>
+              <a href="?delete=<?= $p['id'] ?>" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Delete \'<?= htmlspecialchars(addslashes($p['name'])) ?>\'?')">🗑</a>
             </div>
           </td>
         </tr>

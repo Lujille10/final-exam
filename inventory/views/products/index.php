@@ -192,7 +192,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <div class="page-header">
   <div>
     <h1>Add New Equipment</h1>
-    <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Add New</div>
+    
   </div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>

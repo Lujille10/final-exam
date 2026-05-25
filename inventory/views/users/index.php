@@ -186,7 +186,6 @@ $conn->close();
   <div class="page-header">
     <div>
       <h1>Users</h1>
-      <div class="breadcrumb"><a href="/board/index.php">Dashboard</a> / Users</div>
     </div>
     <button class="btn btn-primary" onclick="document.getElementById('add-user-modal').style.display='flex'">+ Add User</button>
   </div>

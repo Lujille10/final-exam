@@ -229,10 +229,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
           <label>Quantity *</label>
           <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required value="<?= htmlspecialchars($_POST['quantity'] ?? '0') ?>">
         </div>
-        <div class="form-group">
-          <label>Price (₱) *</label>
-          <input type="number" name="price" class="form-control" min="0" step="0.01" placeholder="0.00" required value="<?= htmlspecialchars($_POST['price'] ?? '0.00') ?>">
-        </div>
+      
       </div>
       <div class="form-group">
         <label>Location</label>

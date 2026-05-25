@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
             $upd->close();
 
             if ($result) {
-                $message = ""{$name}" already exists in this category and location — quantity updated from {$existing['quantity']} to $newQty.";
+                $message = "\"{$name}\" already exists in this category and location — quantity updated from ...";
                 $view = 'list';
                 logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
                     'Updated', 'edit', "Auto-merged duplicate \"$name\" — qty {$existing['quantity']} → $newQty (Category: $category, Location: $location)");

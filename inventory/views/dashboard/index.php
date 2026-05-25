@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-  header("Location: /inventory/index.php");
+  header("Location: /inventory/views/products/index.php");
   exit();
 }
 require_once __DIR__ . '/../../models/product.php';

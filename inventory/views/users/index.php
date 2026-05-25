@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) { header("Location: /inventory/index.php"); exit(); }
+if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../public/database.config.php';
 require_once __DIR__ . '/../../controllers/account.php';
 
@@ -176,7 +176,7 @@ $conn->close();
   <div class="page-header">
     <div>
       <h1>Users</h1>
-      <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / Users</div>
+      <div class="breadcrumb"><a href="/board/index.php">Dashboard</a> / Users</div>
     </div>
     <button class="btn btn-primary" onclick="document.getElementById('add-user-modal').style.display='flex'">+ Add User</button>
   </div>

@@ -10,7 +10,7 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
  <title>We Are The Oceans — Inventory System</title>
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="/inventory/public/styles.css">
+ <link rel="stylesheet" href="/public/styles.css">
 </head>
 <body>
 <div class="ocean-bg"></div>
@@ -44,22 +44,22 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
      </div>
    </div>
    <nav>
-     <a href="/inventory/views/dashboard/index.php" class="<?= $current_dir === 'dashboard' ? 'active' : '' ?>">
+     <a href="/views/dashboard/index.php" class="<?= $current_dir === 'dashboard' ? 'active' : '' ?>">
        <span class="nav-icon">🏠</span> Dashboard
      </a>
-     <a href="/inventory/views/products/index.php" class="<?= ($current_dir === 'products' && !isset($_GET['add'])) ? 'active' : '' ?>">
+     <a href="/views/products/index.php" class="<?= ($current_dir === 'products' && !isset($_GET['add'])) ? 'active' : '' ?>">
        <span class="nav-icon">📦</span> Equipment
      </a>
-     <a href="/inventory/views/products/index.php?add=1" class="<?= ($current_dir === 'products' && isset($_GET['add'])) ? 'active' : '' ?>">
+     <a href="/views/products/index.php?add=1" class="<?= ($current_dir === 'products' && isset($_GET['add'])) ? 'active' : '' ?>">
        <span class="nav-icon">➕</span> Add Equipment
      </a>
-     <a href="/inventory/views/categories/index.php" class="<?= $current_dir === 'categories' ? 'active' : '' ?>">
+     <a href="/gories/index.php" class="<?= $current_dir === 'categories' ? 'active' : '' ?>">
        <span class="nav-icon">🏷</span> Categories
      </a>
-     <a href="/inventory/views/reports/index.php" class="<?= $current_dir === 'reports' ? 'active' : '' ?>">
+     <a href="/views/reports/index.php" class="<?= $current_dir === 'reports' ? 'active' : '' ?>">
        <span class="nav-icon">📊</span> Reports
      </a>
-     <a href="/inventory/views/activity/index.php" class="<?= $current_dir === 'activity' ? 'active' : '' ?>">
+     <a href="/views/activity/index.php" class="<?= $current_dir === 'activity' ? 'active' : '' ?>">
        <span class="nav-icon">📋</span> Activity Logs
      </a>
    </nav>
@@ -84,17 +84,17 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
              <div style="font-size:0.82rem;font-weight:700;color:#fff;"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></div>
              <div style="font-size:0.68rem;color:var(--text-muted);margin-top:1px;">Administrator</div>
            </div>
-           <a href="/inventory/views/settings/index.php?tab=profile" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
+           <a href="/views/settings/index.php?tab=profile" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>👤</span> My Profile
            </a>
-           <a href="/inventory/views/settings/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
+           <a href="/ings/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>⚙️</span> Settings
            </a>
-           <a href="/inventory/views/users/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
+           <a href="/views/users/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>👥</span> Users
            </a>
            <div style="height:1px;background:rgba(0,229,255,0.08);margin:0.2rem 0;"></div>
-           <a href="/inventory/index.php?logout=1" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:#ff6b6b;text-decoration:none;font-size:0.8rem;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(229,57,53,0.1)'" onmouseout="this.style.background='transparent'">
+           <a href="/logout=1" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:#ff6b6b;text-decoration:none;font-size:0.8rem;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(229,57,53,0.1)'" onmouseout="this.style.background='transparent'">
              <span>🚪</span> Logout
            </a>
          </div>

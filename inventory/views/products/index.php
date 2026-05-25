@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-    header("Location: /inventory/index.php");
+    header("Location: /index.php");
     exit();
 }
 require_once __DIR__ . '/../../models/product.php';
@@ -189,7 +189,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <div class="page-header">
   <div>
     <h1>Add New Equipment</h1>
-    <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Add New</div>
+    <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Add New</div>
   </div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
@@ -198,7 +198,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
   <div class="form-card">
     <div class="form-card-header">
       <h1>Equipment Details</h1>
-      <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Add New</div>
+      <div class="breadcrumb"><a href="/board/index.php">Dashboard</a> / <a href="?">Equipment</a> / Add New</div>
     </div>
     <form method="POST" class="form-card-body">
       <input type="hidden" name="form_action" value="add">
@@ -269,14 +269,14 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <div class="page-header">
   <div>
     <h1>Edit Equipment</h1>
-    <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Edit</div>
+    <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Edit</div>
   </div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
 <div class="form-card" style="max-width:700px;">
   <div class="form-card-header">
     <h1>Update: <?= htmlspecialchars($editProduct['name']) ?></h1>
-    <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Edit</div>
+    <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / <a href="?">Equipment</a> / Edit</div>
   </div>
   <form method="POST" class="form-card-body">
     <input type="hidden" name="form_action" value="edit">
@@ -336,7 +336,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <div class="page-header">
   <div>
     <h1>All Equipment</h1>
-    <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / Equipment</div>
+    <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Equipment</div>
   </div>
   <a href="?add=1" class="btn btn-primary">+ Add Equipment</a>
 </div>

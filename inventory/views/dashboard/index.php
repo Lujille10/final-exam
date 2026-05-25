@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
-  header("Location: /inventory/index.php");
+  header("Location: /index.php");
   exit();
 }
 require_once __DIR__ . '/../../models/product.php';
@@ -90,7 +90,7 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
     <div class="card">
       <div class="card-header">
         <h2>Recent Equipment</h2>
-        <a href="/inventory/views/products/index.php" class="view-all">View All →</a>
+        <a href="/views/products/index.php" class="view-all">View All →</a>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -106,7 +106,7 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
           <tbody>
             <?php if (empty($recentProducts)): ?>
               <tr><td colspan="5" style="text-align:center;color:var(--text-light);padding:2rem;">
-                No equipment yet. <a href="/inventory/views/products/index.php?add=1">Add the first one!</a>
+                No equipment yet. <a href="/views/products/index.php?add=1">Add the first one!</a>
               </td></tr>
             <?php else: ?>
               <?php

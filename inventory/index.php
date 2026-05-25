@@ -10,11 +10,11 @@ require_once __DIR__ . '/public/database.config.php';
 
 if (isset($_GET['logout'])) {
   session_destroy();
-  header("Location: /inventory/index.php");
+  header("Location: /index.php");
   exit();
 }
 if (isset($_SESSION['user_id'])) {
-  header("Location: /inventory/views/dashboard/index.php");
+  header("Location: /views/dashboard/index.php");
   exit();
 }
 
@@ -44,7 +44,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $credentials = new Account($username, $password);
     $result = $controller->login($credentials->username, $credentials->password);
     if ($result) {
-      header("Location: /inventory/views/dashboard/index.php");
+      header("Location: /views/dashboard/index.php");
       exit();
     } else {
       $errors = "Invalid username or password.";

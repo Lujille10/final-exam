@@ -1,6 +1,6 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) { header("Location: /inventory/index.php"); exit(); }
+if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../models/product.php';
 require_once __DIR__ . '/../../controllers/product.php';
 require_once __DIR__ . '/../../public/database.config.php';
@@ -57,7 +57,7 @@ $barMax = max($available, $inUse, $lowStockC, $damaged, 1);
   <div class="page-header">
     <div>
       <h1>Reports</h1>
-      <div class="breadcrumb"><a href="/inventory/views/dashboard/index.php">Dashboard</a> / Reports</div>
+      <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Reports</div>
     </div>
     <div style="display:flex;gap:.75rem;align-items:center;">
       <div class="form-control" style="width:auto;display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .9rem;font-size:.78rem;">

@@ -28,7 +28,7 @@ class AccountController {
     }
     $stmt->close(); return false;
   }
-  function logout() { session_destroy(); header("Location: /inventory/index.php"); exit(); }
+  function logout() { session_destroy(); header("Location: /index.php"); exit(); }
   function update($id, $username, $password) {
     $hashed = password_hash($password, PASSWORD_BCRYPT);
     $stmt = $this->conn->prepare("UPDATE accounts SET username=?, password=? WHERE id=?");

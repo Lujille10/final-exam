@@ -4,9 +4,9 @@ if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../public/database.config.php';
 
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'Staff' AFTER username");
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT '' AFTER role");
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS full_name VARCHAR(150) DEFAULT '' AFTER email");
+$conn->query("ALTER TABLE accounts ADD COLUMN  role VARCHAR(50) DEFAULT 'Staff' AFTER username");
+$conn->query("ALTER TABLE accounts ADD COLUMN  email VARCHAR(150) DEFAULT '' AFTER role");
+$conn->query("ALTER TABLE accounts ADD COLUMN  full_name VARCHAR(150) DEFAULT '' AFTER email");
 
 $message = $errors = '';
 $activeTab = $_GET['tab'] ?? 'general';

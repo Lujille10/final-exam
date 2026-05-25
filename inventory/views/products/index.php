@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../public/database.config.php';
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
 // Ensure location column exists
-$conn->query("ALTER TABLE products ADD COLUMN IF NOT EXISTS location VARCHAR(150) DEFAULT '' AFTER category");
+$conn->query("ALTER TABLE products ADD COLUMN location VARCHAR(150) DEFAULT '' AFTER category");
 
 // Ensure activity_logs table exists
 $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (

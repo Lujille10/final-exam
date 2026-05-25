@@ -53,7 +53,7 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
      <a href="/views/products/index.php?add=1" class="<?= ($current_dir === 'products' && isset($_GET['add'])) ? 'active' : '' ?>">
        <span class="nav-icon">➕</span> Add Equipment
      </a>
-     <a href="/gories/index.php" class="<?= $current_dir === 'categories' ? 'active' : '' ?>">
+     <a href="/views/categories/index.php" class="<?= $current_dir === 'categories' ? 'active' : '' ?>">
        <span class="nav-icon">🏷</span> Categories
      </a>
      <a href="/views/reports/index.php" class="<?= $current_dir === 'reports' ? 'active' : '' ?>">
@@ -87,14 +87,14 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
            <a href="/views/settings/index.php?tab=profile" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>👤</span> My Profile
            </a>
-           <a href="/ings/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
+           <a href="/views/settings/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>⚙️</span> Settings
            </a>
            <a href="/views/users/index.php" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>👥</span> Users
            </a>
            <div style="height:1px;background:rgba(0,229,255,0.08);margin:0.2rem 0;"></div>
-           <a href="/logout=1" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:#ff6b6b;text-decoration:none;font-size:0.8rem;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(229,57,53,0.1)'" onmouseout="this.style.background='transparent'">
+           <a href="/index.php?logout=1" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:#ff6b6b;text-decoration:none;font-size:0.8rem;font-weight:600;transition:background 0.2s;" onmouseover="this.style.background='rgba(229,57,53,0.1)'" onmouseout="this.style.background='transparent'">
              <span>🚪</span> Logout
            </a>
          </div>

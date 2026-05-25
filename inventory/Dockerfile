@@ -8,7 +8,7 @@ COPY . /var/www/html/
 
 COPY <<'EOF' /etc/nginx/http.d/default.conf
 server {
-    listen 80;
+    listen 8080;
     root /var/www/html;
     index index.php index.html;
 
@@ -26,6 +26,6 @@ EOF
 
 RUN chown -R www-data:www-data /var/www/html
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD sh -c "php-fpm -D && nginx -g 'daemon off;'"

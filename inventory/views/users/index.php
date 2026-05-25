@@ -148,7 +148,7 @@ if ($search) {
 }
 while ($row = $res->fetch_assoc()) { $users[] = $row; }
 
-$roleColors = ['Administrator' => 'badge-blue', 'Staff' => 'badge-green', 'Viewer' => 'badge-gray'];
+$roleColors = ['Administrator' => 'badge-blue', 'Staff' => 'badge-green'];
 $avatars    = ['👤', '👥', '🧑', '👩', '🧑‍💼'];
 
 $editUser = null;
@@ -327,7 +327,6 @@ $conn->close();
                     <select name="role" class="form-control">
                         <option value="Administrator">Administrator</option>
                         <option value="Staff" selected>Staff</option>
-                        <option value="Viewer">Viewer</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -380,7 +379,6 @@ $conn->close();
                     <select name="role" id="edit_role" class="form-control">
                         <option value="Administrator">Administrator</option>
                         <option value="Staff">Staff</option>
-                        <option value="Viewer">Viewer</option>
                     </select>
                 </div>
                 <div class="form-group">

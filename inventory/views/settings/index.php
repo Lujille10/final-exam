@@ -4,10 +4,19 @@ if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../public/database.config.php';
 
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
-$conn->query("ALTER TABLE accounts ADD COLUMN  role VARCHAR(50) DEFAULT 'Staff' AFTER username");
-$conn->query("ALTER TABLE accounts ADD COLUMN  email VARCHAR(150) DEFAULT '' AFTER role");
-$conn->query("ALTER TABLE accounts ADD COLUMN  full_name VARCHAR(150) DEFAULT '' AFTER email");
 
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'role'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN role VARCHAR(50) DEFAULT 'Staff' AFTER username");
+}
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'email'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN email VARCHAR(150) DEFAULT '' AFTER role");
+}
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'full_name'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN full_name VARCHAR(150) DEFAULT '' AFTER email");
+}
 $message = $errors = '';
 $activeTab = $_GET['tab'] ?? 'general';
 

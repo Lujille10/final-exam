@@ -8,8 +8,10 @@ require_once __DIR__ . '/../../public/database.config.php';
 $pc   = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
-// Ensure tables exist
-$conn->query("ALTER TABLE products ADD COLUMN IF NOT EXISTS location VARCHAR(150) DEFAULT '' AFTER category");
+$cols = $conn->query("SHOW COLUMNS FROM products LIKE 'location'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE products ADD COLUMN location VARCHAR(150) DEFAULT '' AFTER category");
+}
 $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT, username VARCHAR(100), action VARCHAR(50),

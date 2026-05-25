@@ -6,10 +6,20 @@ require_once __DIR__ . '/../../controllers/account.php';
 
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
-// Ensure extra columns exist
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'Staff' AFTER username");
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS email VARCHAR(150) DEFAULT '' AFTER role");
-$conn->query("ALTER TABLE accounts ADD COLUMN IF NOT EXISTS full_name VARCHAR(150) DEFAULT '' AFTER email");
+$conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
+
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'role'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN role VARCHAR(50) DEFAULT 'Staff' AFTER username");
+}
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'email'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN email VARCHAR(150) DEFAULT '' AFTER role");
+}
+$cols = $conn->query("SHOW COLUMNS FROM accounts LIKE 'full_name'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE accounts ADD COLUMN full_name VARCHAR(150) DEFAULT '' AFTER email");
+}
 $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT, username VARCHAR(100), action VARCHAR(50),

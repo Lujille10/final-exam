@@ -11,8 +11,11 @@ require_once __DIR__ . '/../../public/database.config.php';
 // ── DB connection for activity logging + location support ──
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
-// Ensure location column exists
-$conn->query("ALTER TABLE products ADD COLUMN location VARCHAR(150) DEFAULT '' AFTER category");
+// Safely add location column if it doesn't exist
+$cols = $conn->query("SHOW COLUMNS FROM products LIKE 'location'");
+if ($cols->num_rows === 0) {
+    $conn->query("ALTER TABLE products ADD COLUMN location VARCHAR(150) DEFAULT '' AFTER category");
+}
 
 // Ensure activity_logs table exists
 $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (

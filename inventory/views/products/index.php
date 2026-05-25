@@ -80,19 +80,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $errors = "Equipment name and category are required.";
         $view = 'add';
     } else {
-        $stmt2 = $conn->prepare("INSERT INTO products (name, description, quantity, category, location) VALUES (?, ?, ?, ?, ?)");
-        $stmt2->bind_param("ssiss", $name, $description, $quantity, $category, $location);
-        $result = $stmt2->execute();
-        $stmt2->close();
+        // ── Check if same name + category + location already exists ──
+        $locCheck = $location ?? '';
+        $chk = $conn->prepare(
+            "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,'')) = LOWER(?)"
+        );
+        $chk->bind_param("sss", $name, $category, $locCheck);
+        $chk->execute();
+        $existing = $chk->get_result()->fetch_assoc();
+        $chk->close();
 
-        if ($result) {
-            $message = "Equipment added successfully!";
-            $view = 'list';
-            logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
-                'Added', 'add', "Added new equipment \"$name\" (Category: $category, Qty: $quantity)");
+        if ($existing) {
+            // ── Duplicate found: add the quantity ──
+            $newQty = $existing['quantity'] + $quantity;
+            $upd = $conn->prepare("UPDATE products SET quantity = ? WHERE id = ?");
+            $upd->bind_param("ii", $newQty, $existing['id']);
+            $result = $upd->execute();
+            $upd->close();
+
+            if ($result) {
+                $message = ""{$name}" already exists in this category and location — quantity updated from {$existing['quantity']} to $newQty.";
+                $view = 'list';
+                logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
+                    'Updated', 'edit', "Auto-merged duplicate \"$name\" — qty {$existing['quantity']} → $newQty (Category: $category, Location: $location)");
+            } else {
+                $errors = "Failed to update quantity.";
+                $view = 'add';
+            }
         } else {
-            $errors = "Failed to add equipment.";
-            $view = 'add';
+            // ── No duplicate: insert as new equipment ──
+            $stmt2 = $conn->prepare("INSERT INTO products (name, description, quantity, category, location) VALUES (?, ?, ?, ?, ?)");
+            $stmt2->bind_param("ssiss", $name, $description, $quantity, $category, $location);
+            $result = $stmt2->execute();
+            $stmt2->close();
+
+            if ($result) {
+                $message = "Equipment \"$name\" added successfully!";
+                $view = 'list';
+                logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
+                    'Added', 'add', "Added new equipment \"$name\" (Category: $category, Qty: $quantity)");
+            } else {
+                $errors = "Failed to add equipment.";
+                $view = 'add';
+            }
         }
     }
 }

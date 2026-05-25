@@ -57,7 +57,7 @@ $barMax = max($available, $inUse, $lowStockC, $damaged, 1);
   <div class="page-header">
     <div>
       <h1>Reports</h1>
-      <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Reports</div>
+      
     </div>
     <div style="display:flex;gap:.75rem;align-items:center;">
       <div class="form-control" style="width:auto;display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .9rem;font-size:.78rem;">

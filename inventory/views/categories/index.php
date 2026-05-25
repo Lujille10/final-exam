@@ -123,7 +123,7 @@ $conn->close();
   <div class="page-header">
     <div>
       <h1>Categories</h1>
-      <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Categories</div>
+      
     </div>
     <button class="btn btn-primary" onclick="document.getElementById('add-cat-modal').style.display='flex'">+ Add Category</button>
   </div>

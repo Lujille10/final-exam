@@ -131,7 +131,7 @@ $maintenance = $_SESSION['settings_maintenance'] ?? 0;
   <div class="page-header">
     <div>
       <h1>Settings</h1>
-      <div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Settings</div>
+      
     </div>
   </div>
 

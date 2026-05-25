@@ -12,7 +12,6 @@ class AccountController {
     }
 
     // ── REGISTER ─────────────────────────────────────────────────────────
-    // Now accepts email and full_name; checks for duplicate username AND email
     function register($username, $password, $email = '', $full_name = '') {
         // Check duplicate username
         $stmt = $this->conn->prepare("SELECT id FROM accounts WHERE username = ?");
@@ -43,10 +42,10 @@ class AccountController {
     }
 
     // ── LOGIN ─────────────────────────────────────────────────────────────
-    // Accepts username OR email as identifier
+    // Accepts username OR email; stores role in session
     function login($identifier, $password) {
         $stmt = $this->conn->prepare(
-            "SELECT id, username, password FROM accounts
+            "SELECT id, username, password, role FROM accounts
              WHERE username = ? OR (email != '' AND email = ?)
              LIMIT 1"
         );
@@ -55,8 +54,9 @@ class AccountController {
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
             if (password_verify($password, $row['password'])) {
-                $_SESSION['user_id']  = $row['id'];
-                $_SESSION['username'] = $row['username'];
+                $_SESSION['user_id']   = $row['id'];
+                $_SESSION['username']  = $row['username'];
+                $_SESSION['role']      = $row['role'] ?? 'Staff'; // ← store role
                 $stmt->close();
                 return true;
             }

@@ -1,33 +1,41 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id'])) {
-  header("Location: /index.php");
-  exit();
-}
+if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../models/product.php';
 require_once __DIR__ . '/../../controllers/product.php';
 require_once __DIR__ . '/../../public/database.config.php';
 
-$pc            = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
-$totalProducts = $pc->getTotalProducts();
-$lowStock      = $pc->getLowStock(5);
-$categories    = $pc->getCategories();
-$recentProducts = array_slice($pc->getAll(), 0, 5);
+$pc = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
-// Category breakdown for donut chart
+// Exclude __cat_placeholder__ from all counts and listings
+$allProducts = array_filter($pc->getAll(), fn($p) => $p['name'] !== '__cat_placeholder__');
+
+$totalProducts  = count($allProducts);
+$lowStockCount  = 0;
+$availableCount = 0;
+$outOfStock     = 0;
+
+foreach ($allProducts as $p) {
+    $qty = (int)$p['quantity'];
+    if ($qty === 0)     $outOfStock++;
+    elseif ($qty <= 5)  $lowStockCount++;
+    else                $availableCount++;
+}
+
+$recentProducts = array_slice(array_values($allProducts), 0, 5);
+
+// Category breakdown for donut (exclude placeholders)
 $catCounts = [];
-foreach ($pc->getAll() as $p) {
-  $cat = $p['category'] ?? 'Other';
-  $catCounts[$cat] = ($catCounts[$cat] ?? 0) + $p['quantity'];
+foreach ($allProducts as $p) {
+    $cat = $p['category'] ?? 'Other';
+    $catCounts[$cat] = ($catCounts[$cat] ?? 0) + (int)$p['quantity'];
 }
 arsort($catCounts);
 
-// Palette for donut
 $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00897b'];
 ?>
 <?php require '../partial/header.php'; ?>
 
-<!-- HERO BANNER -->
 <div class="hero-banner">
   <div class="hero-text">
     <h1>We Are The Oceans</h1>
@@ -35,15 +43,13 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
   </div>
   <div class="hero-wave">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 40" preserveAspectRatio="none" style="height:40px;">
-      <path fill="<?= urlencode('#f0f6ff') ?>" d="M0,20 C200,40 400,0 600,20 C800,40 1000,0 1200,20 L1200,40 L0,40 Z"/>
+      <path fill="rgba(6,15,30,0.95)" d="M0,20 C200,40 400,0 600,20 C800,40 1000,0 1200,20 L1200,40 L0,40 Z"/>
     </svg>
   </div>
 </div>
 
-<!-- PAGE BODY -->
 <div class="page-body">
 
-  <!-- STAT CARDS -->
   <div class="stats-row">
     <div class="stat-card blue">
       <div class="stat-info">
@@ -53,36 +59,32 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
       </div>
       <div class="stat-icon-wrap">📦</div>
     </div>
-
     <div class="stat-card green">
       <div class="stat-info">
         <div class="stat-label">Available Items</div>
-        <div class="stat-value"><?= max(0, $totalProducts - $lowStock) ?></div>
+        <div class="stat-value"><?= $availableCount ?></div>
         <div class="stat-sub">Ready for use</div>
       </div>
       <div class="stat-icon-wrap">✅</div>
     </div>
-
     <div class="stat-card orange">
       <div class="stat-info">
         <div class="stat-label">Low Stock</div>
-        <div class="stat-value"><?= $lowStock ?></div>
+        <div class="stat-value"><?= $lowStockCount ?></div>
         <div class="stat-sub">Quantity less than 5</div>
       </div>
       <div class="stat-icon-wrap">⚠️</div>
     </div>
-
     <div class="stat-card red">
       <div class="stat-info">
-        <div class="stat-label">Damaged Items</div>
-        <div class="stat-value">0</div>
-        <div class="stat-sub">Need repair / replacement</div>
+        <div class="stat-label">Out of Stock</div>
+        <div class="stat-value"><?= $outOfStock ?></div>
+        <div class="stat-sub">Need restocking</div>
       </div>
       <div class="stat-icon-wrap">🔧</div>
     </div>
   </div>
 
-  <!-- BOTTOM GRID: Recent Equipment + Category Overview -->
   <div class="dashboard-bottom">
 
     <!-- RECENT EQUIPMENT TABLE -->
@@ -109,19 +111,13 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
               </td></tr>
             <?php else: ?>
               <?php
-              $statusMap = [
-                'available'   => ['label'=>'Available',   'badge'=>'badge-available'],
-                'in use'      => ['label'=>'In Use',      'badge'=>'badge-inuse'],
-                'low stock'   => ['label'=>'Low Stock',   'badge'=>'badge-low'],
-                'maintenance' => ['label'=>'Maintenance', 'badge'=>'badge-maint'],
-              ];
               $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓'];
-              $locs  = ['Storage A','Boat 1','Storage B','Lab Room','Harbor'];
               $i = 0;
               foreach ($recentProducts as $p):
                 $qty    = (int)$p['quantity'];
-                $status = $qty === 0 ? 'out of stock' : ($qty <= 5 ? 'low stock' : 'available');
-                $si     = $statusMap[$status] ?? ['label'=>ucfirst($status),'badge'=>'badge-gray'];
+                if ($qty === 0)    { $badge = 'badge-red';       $label = 'Out of stock'; }
+                elseif ($qty <= 5) { $badge = 'badge-low';       $label = 'Low Stock'; }
+                else               { $badge = 'badge-available'; $label = 'Available'; }
               ?>
               <tr>
                 <td>
@@ -130,8 +126,8 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
                 </td>
                 <td><?= htmlspecialchars($p['category']) ?></td>
                 <td><?= $qty ?></td>
-                <td><span class="badge <?= $si['badge'] ?>"><?= $si['label'] ?></span></td>
-                <td style="color:var(--text-light)"><?= $locs[$i % count($locs)] ?></td>
+                <td><span class="badge <?= $badge ?>"><?= $label ?></span></td>
+                <td style="color:var(--text-light)"><?= htmlspecialchars($p['location'] ?? '—') ?></td>
               </tr>
               <?php $i++; endforeach; ?>
             <?php endif; ?>
@@ -142,42 +138,30 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
 
     <!-- CATEGORY OVERVIEW DONUT -->
     <div class="card">
-      <div class="card-header">
-        <h2>Category Overview</h2>
-      </div>
+      <div class="card-header"><h2>Category Overview</h2></div>
       <div class="donut-wrap">
         <?php
-        $total = array_sum($catCounts) ?: 1;
+        $total   = array_sum($catCounts) ?: 1;
         $catList = array_slice($catCounts, 0, 5, true);
-        // Build SVG donut
-        $r = 70; $cx = 80; $cy = 80;
-        $circumference = 2 * M_PI * $r;
-        $offset = 0;
-        $segments = [];
-        $ci = 0;
+        $r = 70; $circumference = 2 * M_PI * $r;
+        $offset = 0; $segments = []; $ci = 0;
         foreach ($catList as $cat => $count) {
-          $pct  = $count / $total;
-          $dash = $pct * $circumference;
-          $gap  = $circumference - $dash;
-          $segments[] = ['cat'=>$cat,'count'=>$count,'pct'=>round($pct*100,1),'dash'=>$dash,'gap'=>$gap,'offset'=>$offset,'color'=>$donutColors[$ci % count($donutColors)]];
-          $offset += $dash;
-          $ci++;
+            $pct  = $count / $total;
+            $dash = $pct * $circumference;
+            $gap  = $circumference - $dash;
+            $segments[] = ['cat'=>$cat,'count'=>$count,'pct'=>round($pct*100,1),'dash'=>$dash,'gap'=>$gap,'offset'=>$offset,'color'=>$donutColors[$ci % count($donutColors)]];
+            $offset += $dash; $ci++;
         }
         ?>
         <div class="donut-svg-wrap">
           <svg width="160" height="160" viewBox="0 0 160 160">
-            <!-- Background circle -->
-            <circle cx="80" cy="80" r="70" fill="none" stroke="#f0f4f8" stroke-width="22"/>
+            <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="22"/>
             <?php foreach ($segments as $seg): ?>
-            <circle
-              cx="80" cy="80" r="70"
-              fill="none"
-              stroke="<?= $seg['color'] ?>"
-              stroke-width="22"
+            <circle cx="80" cy="80" r="70" fill="none"
+              stroke="<?= $seg['color'] ?>" stroke-width="22"
               stroke-dasharray="<?= round($seg['dash'],2) ?> <?= round($seg['gap'],2) ?>"
               stroke-dashoffset="<?= round($circumference - $seg['offset'],2) ?>"
-              transform="rotate(-90 80 80)"
-            />
+              transform="rotate(-90 80 80)"/>
             <?php endforeach; ?>
           </svg>
           <div class="donut-center">
@@ -185,7 +169,6 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
             <div class="dc-label">Total</div>
           </div>
         </div>
-
         <div class="donut-legend">
           <?php foreach ($segments as $seg): ?>
           <div class="legend-item">
@@ -198,7 +181,7 @@ $donutColors = ['#1e88e5','#43a047','#00acc1','#fb8c00','#8e24aa','#e53935','#00
       </div>
     </div>
 
-  </div><!-- end dashboard-bottom -->
-</div><!-- end page-body -->
+  </div>
+</div>
 
 <?php require '../partial/footer.php'; ?>

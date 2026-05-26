@@ -1,6 +1,19 @@
 <?php
 $current = basename($_SERVER['PHP_SELF']);
 $current_dir = basename(dirname($_SERVER['PHP_SELF']));
+
+// ── Fetch real role from DB every request ─────────────────
+require_once $_SERVER['DOCUMENT_ROOT'] . '/public/database.config.php';
+$_headerConn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
+$_roleStmt = $_headerConn->prepare("SELECT role FROM accounts WHERE id = ?");
+$_roleStmt->bind_param("i", $_SESSION['user_id']);
+$_roleStmt->execute();
+$_roleStmt->bind_result($_sessionRole);
+$_roleStmt->fetch();
+$_roleStmt->close();
+$_headerConn->close();
+$_SESSION['role'] = $_sessionRole ?: 'Staff';
+$_displayRole = $_SESSION['role'] === 'Administrator' ? 'Administrator' : 'Staff';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,18 +84,18 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
        <button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('sidebar-open')">☰</button>
      </div>
      <div class="topbar-right">
-       <a href="#" class="topbar-bell">🔔<span class="badge-dot"></span></a>
+       <!-- 🔔 Bell icon REMOVED -->
        <div class="topbar-user" id="userMenuToggle" onclick="toggleUserMenu()" style="position:relative;">
          <div class="avatar">👤</div>
          <div class="user-info">
            <div class="user-name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></div>
-           <div class="user-role">Administrator</div>
+           <div class="user-role"><?= htmlspecialchars($_displayRole) ?></div>
          </div>
          <span class="chevron" id="userChevron">▾</span>
          <div id="userDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;min-width:180px;background:linear-gradient(160deg,rgba(0,20,50,0.97) 0%,rgba(0,40,80,0.97) 100%);backdrop-filter:blur(20px);border:1px solid rgba(0,229,255,0.2);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);overflow:hidden;z-index:500;animation:dropdownReveal 0.2s cubic-bezier(.22,1,.36,1) both;">
            <div style="padding:0.75rem 1rem 0.6rem;border-bottom:1px solid rgba(0,229,255,0.1);">
              <div style="font-size:0.82rem;font-weight:700;color:#fff;"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></div>
-             <div style="font-size:0.68rem;color:var(--text-muted);margin-top:1px;">Administrator</div>
+             <div style="font-size:0.68rem;color:var(--text-muted);margin-top:1px;"><?= htmlspecialchars($_displayRole) ?></div>
            </div>
            <a href="/views/settings/index.php?tab=profile" style="display:flex;align-items:center;gap:0.55rem;padding:0.65rem 1rem;color:var(--text-dim);text-decoration:none;font-size:0.8rem;font-weight:500;transition:background 0.2s,color 0.2s;" onmouseover="this.style.background='rgba(0,229,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--text-dim)'">
              <span>👤</span> My Profile

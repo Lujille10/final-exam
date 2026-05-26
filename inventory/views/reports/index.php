@@ -6,20 +6,20 @@ require_once __DIR__ . '/../../controllers/product.php';
 require_once __DIR__ . '/../../public/database.config.php';
 
 $pc = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
-$allProducts  = $pc->getAll();
-$totalProducts= $pc->getTotalProducts();
-$lowStock     = $pc->getLowStock(5);
-$totalValue   = $pc->getTotalValue();
+$allProducts   = $pc->getAll();
+$totalProducts = $pc->getTotalProducts();
+$lowStock      = $pc->getLowStock(5);
+// getTotalValue() REMOVED — price no longer exists
 
 $catCounts = $availCount = $lowCount = $damagedCount = [];
 foreach ($allProducts as $p) {
-    if ($p['name'] === '__cat_placeholder__') continue;
+    if ($p['name'] === '__cat_placeholder__') continue; // exclude placeholders
     $cat = $p['category'] ?? 'Other';
     $qty = (int)$p['quantity'];
     $catCounts[$cat] = ($catCounts[$cat] ?? 0) + $qty;
-    if ($qty === 0) $damagedCount[] = $p;
-    elseif ($qty <= 5) $lowCount[]  = $p;
-    else $availCount[]              = $p;
+    if ($qty === 0)      $damagedCount[] = $p;
+    elseif ($qty <= 5)   $lowCount[]     = $p;
+    else                 $availCount[]   = $p;
 }
 arsort($catCounts);
 $available  = count($availCount);
@@ -55,13 +55,10 @@ $barMax = max($available, $inUse, $lowStockC, $damaged, 1);
 
 <div class="page-body">
   <div class="page-header">
-    <div>
-      <h1>Reports</h1>
-      
-    </div>
+    <div><h1>Reports</h1></div>
     <div style="display:flex;gap:.75rem;align-items:center;">
       <div class="form-control" style="width:auto;display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .9rem;font-size:.78rem;">
-        📅 <?= date('M j, Y') ?> ▾
+        📅 <?= date('M j, Y') ?>
       </div>
     </div>
   </div>
@@ -149,10 +146,10 @@ $barMax = max($available, $inUse, $lowStockC, $damaged, 1);
           <?php endforeach; ?>
           <?php
           $bars = [
-            ['label'=>'Available', 'value'=>$available,  'color'=>'#43a047','glow'=>'rgba(67,160,71,0.4)'],
-            ['label'=>'In Use',    'value'=>$inUse,       'color'=>'#1e88e5','glow'=>'rgba(30,136,229,0.4)'],
-            ['label'=>'Low Stock', 'value'=>$lowStockC,   'color'=>'#fb8c00','glow'=>'rgba(251,140,0,0.4)'],
-            ['label'=>'Out',       'value'=>$damaged,     'color'=>'#e53935','glow'=>'rgba(229,57,53,0.4)'],
+            ['label'=>'Available', 'value'=>$available, 'color'=>'#43a047','glow'=>'rgba(67,160,71,0.4)'],
+            ['label'=>'In Use',    'value'=>$inUse,     'color'=>'#1e88e5','glow'=>'rgba(30,136,229,0.4)'],
+            ['label'=>'Low Stock', 'value'=>$lowStockC, 'color'=>'#fb8c00','glow'=>'rgba(251,140,0,0.4)'],
+            ['label'=>'Out',       'value'=>$damaged,   'color'=>'#e53935','glow'=>'rgba(229,57,53,0.4)'],
           ];
           foreach ($bars as $bar):
             $h = max(4, round(($bar['value'] / $barMax) * 140));
@@ -180,17 +177,6 @@ window.addEventListener('load', () => {
   document.querySelectorAll('.bar-animate').forEach(bar => {
     setTimeout(() => { bar.style.height = bar.dataset.h + 'px'; }, 200);
   });
-});
-document.addEventListener('mousemove', e => {
-  document.querySelectorAll('.stat-card').forEach(card => {
-    const r  = card.getBoundingClientRect();
-    const dx = (e.clientX - (r.left + r.width/2))  / window.innerWidth  * 8;
-    const dy = (e.clientY - (r.top  + r.height/2)) / window.innerHeight * 8;
-    card.style.transform = `translateY(-4px) rotateX(${-dy}deg) rotateY(${dx}deg)`;
-  });
-});
-document.addEventListener('mouseleave', () => {
-  document.querySelectorAll('.stat-card').forEach(c => c.style.transform = '');
 });
 </script>
 <?php require '../partial/footer.php'; ?>

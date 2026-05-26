@@ -1,17 +1,19 @@
 <?php
 session_start();
 if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
-require_once __DIR__ . '/../../models/product.php';
 require_once __DIR__ . '/../../controllers/product.php';
 require_once __DIR__ . '/../../public/database.config.php';
 
-$pc   = new ProductController($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 
-$cols = $conn->query("SHOW COLUMNS FROM products LIKE 'location'");
-if ($cols->num_rows === 0) {
-    $conn->query("ALTER TABLE products ADD COLUMN location VARCHAR(150) DEFAULT '' AFTER category");
-}
+// ── Ensure dedicated categories table exists ──────────────
+$conn->query("CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL UNIQUE,
+    description TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
+
 $conn->query("CREATE TABLE IF NOT EXISTS activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT, username VARCHAR(100), action VARCHAR(50),
@@ -34,77 +36,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
     if (empty($catName)) {
         $errors = "Category name is required.";
     } else {
-        $existing = $pc->getCategories();
-        if (in_array($catName, $existing)) {
+        $chk = $conn->prepare("SELECT id FROM categories WHERE name = ?");
+        $chk->bind_param("s", $catName); $chk->execute(); $chk->store_result();
+        if ($chk->num_rows > 0) {
             $errors = "Category \"$catName\" already exists.";
         } else {
-            // price removed — add($name, $description, $quantity, $category)
-            $result = $pc->add("__cat_placeholder__", $catDesc, 0, $catName);
-            if ($result) {
+            $chk->close();
+            $stmt = $conn->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+            $stmt->bind_param("ss", $catName, $catDesc);
+            if ($stmt->execute()) {
                 $message = "Category \"$catName\" added successfully!";
-                logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
-                    'Added', 'add', "Added new category \"$catName\"");
-            } else {
-                $errors = "Failed to add category.";
-            }
+                logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin', 'Added', 'add', "Added category \"$catName\"");
+            } else { $errors = "Failed to add category."; }
+            $stmt->close();
         }
+        if (isset($chk) && !$chk->result_metadata() === false) $chk->close();
     }
 }
 
 // ── DELETE CATEGORY ───────────────────────────────────────
-if (isset($_GET['delete_cat']) && !empty($_GET['delete_cat'])) {
+if (isset($_GET['delete_cat'])) {
     $catToDel = urldecode($_GET['delete_cat']);
-    $allProds = $pc->getAll();
-    $deleted  = 0;
-    foreach ($allProds as $p) {
-        if ($p['category'] === $catToDel) { $pc->delete((int)$p['id']); $deleted++; }
-    }
-    $message = "Category \"$catToDel\" and its $deleted item(s) deleted.";
-    logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
-        'Deleted', 'delete', "Deleted category \"$catToDel\" ($deleted items removed)");
+    // Delete the category record only — products keep their category label
+    $stmt = $conn->prepare("DELETE FROM categories WHERE name = ?");
+    $stmt->bind_param("s", $catToDel);
+    if ($stmt->execute()) {
+        $message = "Category \"$catToDel\" deleted. Existing equipment in this category is unaffected.";
+        logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin', 'Deleted', 'delete', "Deleted category \"$catToDel\"");
+    } else { $errors = "Failed to delete category."; }
+    $stmt->close();
 }
 
 // ── EDIT CATEGORY ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === 'edit_cat') {
     $oldName = trim($_POST['old_cat_name'] ?? '');
     $newName = trim($_POST['cat_name']     ?? '');
+    $newDesc = trim($_POST['cat_desc']     ?? '');
     if (empty($newName)) {
         $errors = "Category name is required.";
     } else {
-        $allProds = $pc->getAll();
-        $updated  = 0;
-        foreach ($allProds as $p) {
-            if ($p['category'] === $oldName) {
-                // price removed — update($id, $name, $description, $quantity, $category)
-                $pc->update((int)$p['id'], $p['name'], $p['description'], (int)$p['quantity'], $newName);
-                $updated++;
-            }
-        }
-        $message = "Category renamed to \"$newName\" ($updated items updated).";
-        logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
-            'Edited', 'edit', "Renamed category \"$oldName\" to \"$newName\"");
+        // Rename in categories table
+        $stmt = $conn->prepare("UPDATE categories SET name=?, description=? WHERE name=?");
+        $stmt->bind_param("sss", $newName, $newDesc, $oldName);
+        $stmt->execute(); $stmt->close();
+        // Also update products that use the old category name
+        $stmt2 = $conn->prepare("UPDATE products SET category=? WHERE category=?");
+        $stmt2->bind_param("ss", $newName, $oldName);
+        $stmt2->execute();
+        $affected = $stmt2->affected_rows;
+        $stmt2->close();
+        $message = "Category renamed to \"$newName\" ($affected equipment updated).";
+        logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin', 'Edited', 'edit', "Renamed category \"$oldName\" → \"$newName\"");
     }
 }
 
-$allProducts = $pc->getAll();
-$categories  = $pc->getCategories();
-
-$catCounts = [];
-$catDescs  = [];
-foreach ($allProducts as $p) {
-    $cat = $p['category'];
-    if ($p['name'] === '__cat_placeholder__') {
-        $catDescs[$cat] = $p['description'] ?: 'Ocean inventory category.';
-        continue;
-    }
-    $catCounts[$cat] = ($catCounts[$cat] ?? 0) + 1;
-}
-
-$icons  = ['🤿','🎣','🦺','🚤','🧪','⚓','🔭','🌊','🐠','🐋'];
+// ── FETCH CATEGORIES ──────────────────────────────────────
 $search = trim($_GET['search'] ?? '');
 if ($search) {
-    $categories = array_filter($categories, fn($c) => stripos($c, $search) !== false);
+    $stmt = $conn->prepare("SELECT name, description FROM categories WHERE name LIKE ? ORDER BY name ASC");
+    $like = "%$search%"; $stmt->bind_param("s", $like); $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query("SELECT name, description FROM categories ORDER BY name ASC");
 }
+$categories = [];
+while ($row = $result->fetch_assoc()) { $categories[] = $row; }
+
+// Count equipment per category (exclude placeholders)
+$countRes = $conn->query("SELECT category, COUNT(*) as cnt FROM products WHERE name != '__cat_placeholder__' GROUP BY category");
+$catCounts = [];
+while ($r = $countRes->fetch_assoc()) { $catCounts[$r['category']] = $r['cnt']; }
+
+$icons = ['🤿','🎣','🦺','🚤','🧪','⚓','🔭','🌊','🐠','🐋'];
 $conn->close();
 ?>
 <?php require '../partial/header.php'; ?>
@@ -123,7 +126,7 @@ $conn->close();
   <?php if ($errors):  ?><div class="alert alert-danger"><?= htmlspecialchars($errors) ?></div><?php endif; ?>
 
   <div class="page-header">
-    <div><h1>Categories</h1></div>
+    <div><h1>Categories</h1><div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Categories</div></div>
     <button class="btn btn-primary" onclick="document.getElementById('add-cat-modal').style.display='flex'">+ Add Category</button>
   </div>
 
@@ -145,28 +148,27 @@ $conn->close();
           <tr><th>#</th><th>Category Name</th><th>Description</th><th>Total Equipment</th><th>Actions</th></tr>
         </thead>
         <tbody>
-          <?php $i = 1; foreach ($categories as $cat): ?>
+          <?php if (empty($categories)): ?>
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No categories yet. Add one!</td></tr>
+          <?php else: $i = 1; foreach ($categories as $cat): ?>
           <tr style="animation:cardReveal 0.5s <?= ($i-1)*0.06 ?>s both;">
             <td style="color:var(--text-muted)"><?= $i ?></td>
             <td>
               <span class="equip-icon"><?= $icons[($i-1) % count($icons)] ?></span>
-              <strong><?= htmlspecialchars($cat) ?></strong>
+              <strong><?= htmlspecialchars($cat['name']) ?></strong>
             </td>
-            <td style="color:var(--text-dim)"><?= htmlspecialchars($catDescs[$cat] ?? 'Ocean inventory category.') ?></td>
-            <td><span class="badge badge-blue"><?= $catCounts[$cat] ?? 0 ?> items</span></td>
+            <td style="color:var(--text-dim)"><?= htmlspecialchars($cat['description'] ?: 'Ocean inventory category.') ?></td>
+            <td><span class="badge badge-blue"><?= $catCounts[$cat['name']] ?? 0 ?> items</span></td>
             <td>
               <div class="action-btns">
                 <button class="btn btn-warning btn-sm"
-                  onclick="openEditCat('<?= htmlspecialchars(addslashes($cat)) ?>','<?= htmlspecialchars(addslashes($catDescs[$cat] ?? '')) ?>')">✏️</button>
-                <a href="?delete_cat=<?= urlencode($cat) ?>" class="btn btn-danger btn-sm"
-                   onclick="return confirm('Delete category \'<?= htmlspecialchars(addslashes($cat)) ?>\' and ALL its items?')">🗑</a>
+                  onclick="openEditCat('<?= htmlspecialchars(addslashes($cat['name'])) ?>','<?= htmlspecialchars(addslashes($cat['description'])) ?>')">✏️</button>
+                <a href="?delete_cat=<?= urlencode($cat['name']) ?>" class="btn btn-danger btn-sm"
+                   onclick="return confirm('Delete category \'<?= htmlspecialchars(addslashes($cat['name'])) ?>\'? Equipment in this category will keep their label.')">🗑</a>
               </div>
             </td>
           </tr>
-          <?php $i++; endforeach; ?>
-          <?php if (empty($categories)): ?>
-          <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No categories found.</td></tr>
-          <?php endif; ?>
+          <?php $i++; endforeach; endif; ?>
         </tbody>
       </table>
     </div>

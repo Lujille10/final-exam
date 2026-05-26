@@ -4,8 +4,6 @@ if (!isset($_SESSION['user_id'])) { header("Location: /index.php"); exit(); }
 require_once __DIR__ . '/../../public/database.config.php';
 
 $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
-
-// Ensure columns exist
 foreach (['role'=>"ALTER TABLE accounts ADD COLUMN role VARCHAR(50) DEFAULT 'Staff' AFTER username",
           'email'=>"ALTER TABLE accounts ADD COLUMN email VARCHAR(150) DEFAULT '' AFTER role",
           'full_name'=>"ALTER TABLE accounts ADD COLUMN full_name VARCHAR(150) DEFAULT '' AFTER email"] as $col => $sql) {
@@ -16,40 +14,19 @@ foreach (['role'=>"ALTER TABLE accounts ADD COLUMN role VARCHAR(50) DEFAULT 'Sta
 $message = $errors = '';
 $activeTab = $_GET['tab'] ?? 'general';
 
-// ── MAINTENANCE MODE: block non-admins on every page load ─────────────────
-$maintenanceActive = $_SESSION['settings_maintenance'] ?? 0;
-if ($maintenanceActive) {
-    $roleCheck = $conn->prepare("SELECT role FROM accounts WHERE id = ?");
-    $roleCheck->bind_param("i", $_SESSION['user_id']);
-    $roleCheck->execute();
-    $roleCheck->bind_result($userRole);
-    $roleCheck->fetch();
-    $roleCheck->close();
-    if ($userRole !== 'Administrator') {
-        session_destroy();
-        header("Location: /index.php?maintenance=1");
-        exit();
-    }
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($activeTab === 'profile') {
         $newUsername = trim($_POST['username']  ?? '');
         $newFullName = trim($_POST['full_name'] ?? '');
         $newEmail    = trim($_POST['email']     ?? '');
-
         if (empty($newUsername)) {
             $errors = "Username is required.";
         } else {
             $stmt = $conn->prepare("UPDATE accounts SET username=?, full_name=?, email=? WHERE id=?");
             $stmt->bind_param("sssi", $newUsername, $newFullName, $newEmail, $_SESSION['user_id']);
-            if ($stmt->execute()) {
-                $_SESSION['username'] = $newUsername;
-                $message = "Profile updated successfully!";
-            } else {
-                $errors = "Failed to update profile.";
-            }
+            if ($stmt->execute()) { $_SESSION['username'] = $newUsername; $message = "Profile updated successfully!"; }
+            else { $errors = "Failed to update profile."; }
             $stmt->close();
         }
 
@@ -57,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $currentPass = trim($_POST['current_pass'] ?? '');
         $newPass     = trim($_POST['new_pass']     ?? '');
         $confirmPass = trim($_POST['confirm_pass'] ?? '');
-
         if (empty($currentPass) || empty($newPass) || empty($confirmPass)) {
             $errors = "All password fields are required.";
         } elseif ($newPass !== $confirmPass) {
@@ -66,48 +42,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = "New password must be at least 6 characters.";
         } else {
             $stmt = $conn->prepare("SELECT password FROM accounts WHERE id = ?");
-            $stmt->bind_param("i", $_SESSION['user_id']);
-            $stmt->execute();
-            $row = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
+            $stmt->bind_param("i", $_SESSION['user_id']); $stmt->execute();
+            $row = $stmt->get_result()->fetch_assoc(); $stmt->close();
             if ($row && password_verify($currentPass, $row['password'])) {
                 $hashed = password_hash($newPass, PASSWORD_BCRYPT);
                 $stmt2  = $conn->prepare("UPDATE accounts SET password=? WHERE id=?");
                 $stmt2->bind_param("si", $hashed, $_SESSION['user_id']);
                 $message = $stmt2->execute() ? "Password changed successfully!" : "Failed to change password.";
                 $stmt2->close();
-            } else {
-                $errors = "Current password is incorrect.";
-            }
+            } else { $errors = "Current password is incorrect."; }
         }
 
     } elseif ($activeTab === 'general') {
         $_SESSION['settings_sys_name']  = trim($_POST['sys_name']   ?? '');
         $_SESSION['settings_sys_email'] = trim($_POST['sys_email']  ?? '');
         $_SESSION['settings_low_stock'] = (int)($_POST['low_stock'] ?? 5);
-        $message = "General settings saved successfully!";
-
-    } elseif ($activeTab === 'system') {
-        $_SESSION['settings_per_page']    = (int)($_POST['per_page'] ?? 10);
-        // maintenance mode: save and immediately enforce
-        $_SESSION['settings_maintenance'] = isset($_POST['maintenance']) ? 1 : 0;
-        $message = "System settings saved successfully!";
+        $message = "General settings saved!";
     }
 }
 
-// Load current user
 $stmt = $conn->prepare("SELECT username, full_name, email FROM accounts WHERE id = ?");
-$stmt->bind_param("i", $_SESSION['user_id']);
-$stmt->execute();
-$currentUser = $stmt->get_result()->fetch_assoc() ?? [];
-$stmt->close();
+$stmt->bind_param("i", $_SESSION['user_id']); $stmt->execute();
+$currentUser = $stmt->get_result()->fetch_assoc() ?? []; $stmt->close();
 $conn->close();
 
-$sysName     = $_SESSION['settings_sys_name']    ?? 'We Are The Oceans Inventory System';
-$sysEmail    = $_SESSION['settings_sys_email']   ?? 'info@wearetheoceans.com';
-$lowStock    = $_SESSION['settings_low_stock']   ?? 5;
-$perPage     = $_SESSION['settings_per_page']    ?? 10;
-$maintenance = $_SESSION['settings_maintenance'] ?? 0;
+$sysName  = $_SESSION['settings_sys_name']  ?? 'We Are The Oceans Inventory System';
+$sysEmail = $_SESSION['settings_sys_email'] ?? 'info@wearetheoceans.com';
+$lowStock = $_SESSION['settings_low_stock'] ?? 5;
+
+// Only 3 tabs — System removed
+$tabs = ['general'=>'General','profile'=>'Profile','security'=>'Security'];
+if (!isset($tabs[$activeTab])) $activeTab = 'general';
 ?>
 <?php require '../partial/header.php'; ?>
 <div class="hero-banner" style="min-height:110px;padding:1.4rem 2.5rem 2.8rem;">
@@ -126,68 +91,18 @@ $maintenance = $_SESSION['settings_maintenance'] ?? 0;
 
   <div class="page-header"><div><h1>Settings</h1></div></div>
 
+  <!-- Tabs -->
   <div class="settings-tabs">
-    <?php foreach (['general'=>'General','profile'=>'Profile','security'=>'Security','system'=>'System'] as $key => $label): ?>
+    <?php foreach ($tabs as $key => $label): ?>
     <a href="?tab=<?= $key ?>" class="settings-tab <?= $activeTab === $key ? 'active' : '' ?>"><?= $label ?></a>
     <?php endforeach; ?>
   </div>
 
   <form method="POST" action="?tab=<?= htmlspecialchars($activeTab) ?>">
-    <!-- Profile and Security tabs: single column, no logo panel -->
-    <?php if (in_array($activeTab, ['profile', 'security'])): ?>
     <div class="form-card" style="max-width:680px;">
       <div class="form-card-header">
-        <h1><?= ucfirst($activeTab) ?> Settings</h1>
-        <div class="breadcrumb">Manage your <?= $activeTab ?> preferences</div>
-      </div>
-      <div class="form-card-body">
-
-        <?php if ($activeTab === 'profile'): ?>
-        <!-- Password fields REMOVED — handled in Security tab -->
-        <div class="form-row">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="full_name" class="form-control"
-                   value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>"
-                   placeholder="Your full name">
-          </div>
-          <div class="form-group">
-            <label>Username *</label>
-            <input type="text" name="username" class="form-control"
-                   value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" name="email" class="form-control"
-                 value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>"
-                 placeholder="your@email.com">
-        </div>
-
-        <?php elseif ($activeTab === 'security'): ?>
-        <div class="form-group">
-          <label>Current Password</label>
-          <input type="password" name="current_pass" class="form-control" placeholder="Enter current password">
-        </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input type="password" name="new_pass" class="form-control" placeholder="Min. 6 characters">
-        </div>
-        <div class="form-group">
-          <label>Confirm New Password</label>
-          <input type="password" name="confirm_pass" class="form-control" placeholder="Repeat new password">
-        </div>
-        <?php endif; ?>
-
-      </div>
-    </div>
-
-    <?php else: ?>
-    <!-- General and System tabs: two-column with logo panel REMOVED -->
-    <div class="form-card" style="max-width:680px;">
-      <div class="form-card-header">
-        <h1><?= ucfirst($activeTab) ?> Settings</h1>
-        <div class="breadcrumb">Manage your <?= $activeTab ?> preferences</div>
+        <h1><?= $tabs[$activeTab] ?> Settings</h1>
+        <div class="breadcrumb">Manage your <?= strtolower($tabs[$activeTab]) ?> preferences</div>
       </div>
       <div class="form-card-body">
 
@@ -223,38 +138,45 @@ $maintenance = $_SESSION['settings_maintenance'] ?? 0;
           <small style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;display:block;">Items at or below this quantity are flagged as low stock.</small>
         </div>
 
-        <?php elseif ($activeTab === 'system'): ?>
-        <div class="form-group">
-          <label>Items Per Page</label>
-          <select name="per_page" class="form-control">
-            <?php foreach ([5,10,25,50] as $n): ?>
-            <option <?= $perPage == $n ? 'selected' : '' ?>><?= $n ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <!-- Activity Logging toggle REMOVED — all activity is always logged -->
-        <div class="form-group">
-          <label>Maintenance Mode</label>
-          <div style="display:flex;align-items:center;gap:.75rem;margin-top:.3rem;">
-            <label class="toggle-switch">
-              <input type="checkbox" name="maintenance" <?= $maintenance ? 'checked' : '' ?>>
-              <span class="toggle-slider"></span>
-            </label>
-            <span style="font-size:.8rem;color:var(--text-dim);">Disable access for non-admin users</span>
+        <?php elseif ($activeTab === 'profile'): ?>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name" class="form-control"
+                   value="<?= htmlspecialchars($currentUser['full_name'] ?? '') ?>" placeholder="Your full name">
           </div>
-          <small style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem;display:block;">
-            When enabled, only Administrators can log in. Staff accounts will be redirected on next page load.
-          </small>
+          <div class="form-group">
+            <label>Username *</label>
+            <input type="text" name="username" class="form-control"
+                   value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" required>
+          </div>
         </div>
         <div class="form-group">
-          <label>Database Backup</label>
-          <a href="#" class="btn btn-secondary btn-sm" style="display:inline-flex;margin-top:.3rem;">⬇️ Export Backup</a>
+          <label>Email Address</label>
+          <input type="email" name="email" class="form-control"
+                 value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" placeholder="your@email.com">
+        </div>
+        <p style="font-size:.75rem;color:var(--text-muted);margin-top:.5rem;">
+          To change your password, go to the <a href="?tab=security" style="color:var(--cyan-bright);">Security</a> tab.
+        </p>
+
+        <?php elseif ($activeTab === 'security'): ?>
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" name="current_pass" class="form-control" placeholder="Enter current password" required>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" name="new_pass" class="form-control" placeholder="Min. 6 characters" required>
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" name="confirm_pass" class="form-control" placeholder="Repeat new password" required>
         </div>
         <?php endif; ?>
 
       </div>
     </div>
-    <?php endif; ?>
 
     <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.2rem;">
       <a href="?tab=<?= htmlspecialchars($activeTab) ?>" class="btn btn-secondary">Cancel</a>
@@ -265,14 +187,8 @@ $maintenance = $_SESSION['settings_maintenance'] ?? 0;
 
 <style>
 .settings-tabs{display:flex;gap:0;margin-bottom:1.4rem;border-bottom:1px solid rgba(0,229,255,0.12);}
-.settings-tab{padding:.6rem 1.4rem;font-size:.82rem;font-weight:600;color:var(--text-muted);text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;position:relative;top:1px;}
+.settings-tab{padding:.65rem 1.6rem;font-size:.84rem;font-weight:600;color:var(--text-muted);text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;position:relative;top:1px;}
 .settings-tab:hover{color:var(--text-dim);}
-.settings-tab.active{color:var(--cyan-bright);border-bottom-color:var(--cyan-bright);text-shadow:0 0 10px rgba(0,229,255,.4);}
-.toggle-switch{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0;}
-.toggle-switch input{opacity:0;width:0;height:0;}
-.toggle-slider{position:absolute;inset:0;border-radius:22px;background:rgba(255,255,255,0.1);border:1px solid rgba(0,229,255,.2);cursor:pointer;transition:.3s;}
-.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;border-radius:50%;left:2px;top:2px;background:var(--text-dim);transition:.3s;}
-.toggle-switch input:checked + .toggle-slider{background:rgba(0,229,255,.25);border-color:var(--cyan);}
-.toggle-switch input:checked + .toggle-slider::before{transform:translateX(20px);background:var(--cyan-bright);box-shadow:0 0 8px var(--cyan);}
+.settings-tab.active{color:var(--cyan-bright);border-bottom-color:var(--cyan-bright);}
 </style>
 <?php require '../partial/footer.php'; ?>

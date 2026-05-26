@@ -18,7 +18,8 @@ class ProductController {
     }
 
     function getAll() {
-        $result = $this->conn->query("SELECT * FROM products ORDER BY created_at DESC");
+        // Exclude __cat_placeholder__ rows everywhere
+        $result = $this->conn->query("SELECT * FROM products WHERE name != '__cat_placeholder__' ORDER BY created_at DESC");
         $products = [];
         while ($row = $result->fetch_assoc()) { $products[] = $row; }
         return $products;
@@ -28,8 +29,7 @@ class ProductController {
         $stmt = $this->conn->prepare("SELECT * FROM products WHERE id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
-        $result  = $stmt->get_result();
-        $product = $result->fetch_assoc();
+        $product = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $product;
     }
@@ -51,6 +51,7 @@ class ProductController {
     }
 
     function getTotalProducts() {
+        // Exclude placeholders
         $result = $this->conn->query("SELECT COUNT(*) as total FROM products WHERE name != '__cat_placeholder__'");
         return $result->fetch_assoc()['total'];
     }
@@ -60,13 +61,23 @@ class ProductController {
         $stmt->bind_param("i", $threshold);
         $stmt->execute();
         $result = $stmt->get_result();
-        return $result->fetch_assoc()['total'];
+        $count = $result->fetch_assoc()['total'];
+        $stmt->close();
+        return $count;
     }
 
     function getCategories() {
-        $result = $this->conn->query("SELECT DISTINCT category FROM products");
+        // Read from dedicated categories table
+        $result = $this->conn->query("SELECT name FROM categories ORDER BY name ASC");
         $cats = [];
-        while ($row = $result->fetch_assoc()) { $cats[] = $row['category']; }
+        if ($result) {
+            while ($row = $result->fetch_assoc()) { $cats[] = $row['name']; }
+        }
+        // Fallback: if categories table is empty, get distinct from products
+        if (empty($cats)) {
+            $r2 = $this->conn->query("SELECT DISTINCT category FROM products WHERE name != '__cat_placeholder__' AND category != '' ORDER BY category ASC");
+            if ($r2) { while ($row = $r2->fetch_assoc()) { $cats[] = $row['category']; } }
+        }
         return $cats;
     }
 }

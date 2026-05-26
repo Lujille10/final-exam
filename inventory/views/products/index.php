@@ -248,32 +248,32 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 340px;gap:1.2rem;align-items:start;">
-  <div class="form-card">
-    <div class="form-card-header"><h1>Equipment Details</h1></div>
-    <form method="POST" class="form-card-body">
-      <input type="hidden" name="form_action" value="add">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Equipment Name *</label>
-          <input type="text" name="name" class="form-control" placeholder="Enter equipment name" required
-                 value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
-        </div>
-        <div class="form-group">
-          <label>Description (Optional)</label>
-          <input type="text" name="description" class="form-control" placeholder="Enter description..."
-                 value="<?= htmlspecialchars($_POST['description'] ?? '') ?>">
-        </div>
+<div class="form-card" style="max-width:700px;">
+  <div class="form-card-header"><h1>Equipment Details</h1></div>
+  <form method="POST" class="form-card-body">
+    <input type="hidden" name="form_action" value="add">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Equipment Name *</label>
+        <input type="text" name="name" class="form-control" placeholder="Enter equipment name" required
+               value="<?= htmlspecialchars($_POST['name'] ?? '') ?>">
       </div>
       <div class="form-group">
-        <label>Category *</label>
-        <select name="category" class="form-control" required>
-          <option value="">Select category</option>
-          <?php foreach ($categories as $c): ?>
-          <option value="<?= htmlspecialchars($c) ?>" <?= ($_POST['category'] ?? '') === $c ? 'selected' : '' ?>><?= htmlspecialchars($c) ?></option>
-          <?php endforeach; ?>
-        </select>
+        <label>Description (Optional)</label>
+        <input type="text" name="description" class="form-control" placeholder="Enter description..."
+               value="<?= htmlspecialchars($_POST['description'] ?? '') ?>">
       </div>
+    </div>
+    <div class="form-group">
+      <label>Category *</label>
+      <select name="category" class="form-control" required>
+        <option value="">Select category</option>
+        <?php foreach ($categories as $c): ?>
+        <option value="<?= htmlspecialchars($c) ?>" <?= ($_POST['category'] ?? '') === $c ? 'selected' : '' ?>><?= htmlspecialchars($c) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="form-row">
       <div class="form-group">
         <label>Quantity *</label>
         <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required
@@ -291,25 +291,12 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
           <?php endforeach; ?>
         </select>
       </div>
-      <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem;">
-        <a href="?" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">💾 Save Equipment</button>
-      </div>
-    </form>
-  </div>
-
-  <!-- Image upload card -->
-  <div class="form-card">
-    <div class="form-card-header"><h1>Equipment Image</h1><div class="breadcrumb">Optional</div></div>
-    <div class="form-card-body">
-      <div class="upload-zone" onclick="document.getElementById('eq-img').click()" id="uploadZone">
-        <div class="upload-icon" id="uploadIcon">☁️</div>
-        <p id="uploadText">Drag &amp; drop image here<br>or <span class="upload-link">click to browse</span></p>
-        <input type="file" id="eq-img" accept="image/*" style="display:none" onchange="previewImage(this)">
-        <img id="imgPreview" src="" alt="" style="display:none;max-width:100%;max-height:160px;border-radius:8px;margin-top:0.75rem;">
-      </div>
     </div>
-  </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem;">
+      <a href="?" class="btn btn-secondary">Cancel</a>
+      <button type="submit" class="btn btn-primary">💾 Save Equipment</button>
+    </div>
+  </form>
 </div>
 
 <!-- ══ EDIT EQUIPMENT ══ -->
@@ -457,21 +444,5 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
 <?php endif; ?>
 </div>
 
-<script>
-function previewImage(input) {
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const preview = document.getElementById('imgPreview');
-      const icon    = document.getElementById('uploadIcon');
-      const text    = document.getElementById('uploadText');
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-      icon.style.display    = 'none';
-      text.style.display    = 'none';
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
-}
-</script>
+<script></script>
 <?php require '../partial/footer.php'; ?>

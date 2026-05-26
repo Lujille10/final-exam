@@ -10,7 +10,7 @@ $conn = new mysqli($SERVER_NAME, $USERNAME, $PASSWORD, $DB_NAME);
 $conn->query("CREATE TABLE IF NOT EXISTS categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(150) NOT NULL UNIQUE,
-    description TEXT DEFAULT '',
+    description TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )");
 
@@ -57,7 +57,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
 // ── DELETE CATEGORY ───────────────────────────────────────
 if (isset($_GET['delete_cat'])) {
     $catToDel = urldecode($_GET['delete_cat']);
-    // Delete the category record only — products keep their category label
     $stmt = $conn->prepare("DELETE FROM categories WHERE name = ?");
     $stmt->bind_param("s", $catToDel);
     if ($stmt->execute()) {
@@ -75,11 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
     if (empty($newName)) {
         $errors = "Category name is required.";
     } else {
-        // Rename in categories table
         $stmt = $conn->prepare("UPDATE categories SET name=?, description=? WHERE name=?");
         $stmt->bind_param("sss", $newName, $newDesc, $oldName);
         $stmt->execute(); $stmt->close();
-        // Also update products that use the old category name
         $stmt2 = $conn->prepare("UPDATE products SET category=? WHERE category=?");
         $stmt2->bind_param("ss", $newName, $oldName);
         $stmt2->execute();
@@ -102,7 +99,6 @@ if ($search) {
 $categories = [];
 while ($row = $result->fetch_assoc()) { $categories[] = $row; }
 
-// Count equipment per category (exclude placeholders)
 $countRes = $conn->query("SELECT category, COUNT(*) as cnt FROM products WHERE name != '__cat_placeholder__' GROUP BY category");
 $catCounts = [];
 while ($r = $countRes->fetch_assoc()) { $catCounts[$r['category']] = $r['cnt']; }

@@ -70,7 +70,6 @@ $sysName  = $_SESSION['settings_sys_name']  ?? 'We Are The Oceans Inventory Syst
 $sysEmail = $_SESSION['settings_sys_email'] ?? 'info@wearetheoceans.com';
 $lowStock = $_SESSION['settings_low_stock'] ?? 5;
 
-// Only 3 tabs — System removed
 $tabs = ['general'=>'General','profile'=>'Profile','security'=>'Security'];
 if (!isset($tabs[$activeTab])) $activeTab = 'general';
 ?>
@@ -98,8 +97,8 @@ if (!isset($tabs[$activeTab])) $activeTab = 'general';
     <?php endforeach; ?>
   </div>
 
-  <form method="POST" action="?tab=<?= htmlspecialchars($activeTab) ?>">
-    <div class="form-card" style="max-width:680px;">
+  <form method="POST" action="?tab=<?= htmlspecialchars($activeTab) ?>" style="width:100%;">
+    <div class="form-card settings-form-card">
       <div class="form-card-header">
         <h1><?= $tabs[$activeTab] ?> Settings</h1>
         <div class="breadcrumb">Manage your <?= strtolower($tabs[$activeTab]) ?> preferences</div>
@@ -107,32 +106,36 @@ if (!isset($tabs[$activeTab])) $activeTab = 'general';
       <div class="form-card-body">
 
         <?php if ($activeTab === 'general'): ?>
-        <div class="form-group">
-          <label>System Name</label>
-          <input type="text" name="sys_name" class="form-control" value="<?= htmlspecialchars($sysName) ?>">
+        <div class="form-row">
+          <div class="form-group">
+            <label>System Name</label>
+            <input type="text" name="sys_name" class="form-control" value="<?= htmlspecialchars($sysName) ?>">
+          </div>
+          <div class="form-group">
+            <label>System Email</label>
+            <input type="email" name="sys_email" class="form-control" value="<?= htmlspecialchars($sysEmail) ?>">
+          </div>
         </div>
-        <div class="form-group">
-          <label>System Email</label>
-          <input type="email" name="sys_email" class="form-control" value="<?= htmlspecialchars($sysEmail) ?>">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Default Timezone</label>
+            <select name="timezone" class="form-control">
+              <option selected>(GMT+08:00) Asia/Manila</option>
+              <option>(GMT+00:00) UTC</option>
+              <option>(GMT-05:00) America/New_York</option>
+              <option>(GMT+09:00) Asia/Tokyo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Date Format</label>
+            <select name="date_format" class="form-control">
+              <option selected>May 15, 2024 (MM DD, YYYY)</option>
+              <option>15/05/2024 (DD/MM/YYYY)</option>
+              <option>2024-05-15 (YYYY-MM-DD)</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Default Timezone</label>
-          <select name="timezone" class="form-control">
-            <option selected>(GMT+08:00) Asia/Manila</option>
-            <option>(GMT+00:00) UTC</option>
-            <option>(GMT-05:00) America/New_York</option>
-            <option>(GMT+09:00) Asia/Tokyo</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Date Format</label>
-          <select name="date_format" class="form-control">
-            <option selected>May 15, 2024 (MM DD, YYYY)</option>
-            <option>15/05/2024 (DD/MM/YYYY)</option>
-            <option>2024-05-15 (YYYY-MM-DD)</option>
-          </select>
-        </div>
-        <div class="form-group">
+        <div class="form-group" style="max-width:320px;">
           <label>Low Stock Threshold</label>
           <input type="number" name="low_stock" class="form-control" value="<?= (int)$lowStock ?>" min="1" max="100">
           <small style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;display:block;">Items at or below this quantity are flagged as low stock.</small>
@@ -151,27 +154,35 @@ if (!isset($tabs[$activeTab])) $activeTab = 'general';
                    value="<?= htmlspecialchars($currentUser['username'] ?? '') ?>" required>
           </div>
         </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" name="email" class="form-control"
-                 value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" placeholder="your@email.com">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" class="form-control"
+                   value="<?= htmlspecialchars($currentUser['email'] ?? '') ?>" placeholder="your@email.com">
+          </div>
+          <div class="form-group"></div><!-- spacer -->
         </div>
         <p style="font-size:.75rem;color:var(--text-muted);margin-top:.5rem;">
           To change your password, go to the <a href="?tab=security" style="color:var(--cyan-bright);">Security</a> tab.
         </p>
 
         <?php elseif ($activeTab === 'security'): ?>
-        <div class="form-group">
-          <label>Current Password</label>
-          <input type="password" name="current_pass" class="form-control" placeholder="Enter current password" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" name="current_pass" class="form-control" placeholder="Enter current password" required>
+          </div>
+          <div class="form-group"></div><!-- spacer -->
         </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input type="password" name="new_pass" class="form-control" placeholder="Min. 6 characters" required>
-        </div>
-        <div class="form-group">
-          <label>Confirm New Password</label>
-          <input type="password" name="confirm_pass" class="form-control" placeholder="Repeat new password" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" name="new_pass" class="form-control" placeholder="Min. 6 characters" required>
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" name="confirm_pass" class="form-control" placeholder="Repeat new password" required>
+          </div>
         </div>
         <?php endif; ?>
 
@@ -186,9 +197,45 @@ if (!isset($tabs[$activeTab])) $activeTab = 'general';
 </div>
 
 <style>
-.settings-tabs{display:flex;gap:0;margin-bottom:1.4rem;border-bottom:1px solid rgba(0,229,255,0.12);}
-.settings-tab{padding:.65rem 1.6rem;font-size:.84rem;font-weight:600;color:var(--text-muted);text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;position:relative;top:1px;}
-.settings-tab:hover{color:var(--text-dim);}
-.settings-tab.active{color:var(--cyan-bright);border-bottom-color:var(--cyan-bright);}
+/* ── Tabs ── */
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.4rem;
+  border-bottom: 1px solid rgba(0,229,255,0.12);
+}
+.settings-tab {
+  padding: .65rem 1.6rem;
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: all .2s;
+  position: relative;
+  top: 1px;
+}
+.settings-tab:hover { color: var(--text-dim); }
+.settings-tab.active { color: var(--cyan-bright); border-bottom-color: var(--cyan-bright); }
+
+/* ── Settings card fills full width ── */
+.settings-form-card {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+.settings-form-card .form-card-body {
+  padding: 1.8rem 2rem;
+}
+
+/* ── Two-column grid for form rows ── */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.5rem;
+  margin-bottom: .25rem;
+}
+@media (max-width: 600px) {
+  .form-row { grid-template-columns: 1fr; }
+}
 </style>
 <?php require '../partial/footer.php'; ?>

@@ -179,7 +179,6 @@ $conn->close();
     <div class="page-header">
         <div>
             <h1>Users</h1>
-            <div class="breadcrumb"><a href="/board/index.php">Dashboard</a> / Users</div>
         </div>
         <?php if ($isAdmin): ?>
             <button class="btn btn-primary"

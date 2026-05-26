@@ -122,7 +122,8 @@ $conn->close();
   <?php if ($errors):  ?><div class="alert alert-danger"><?= htmlspecialchars($errors) ?></div><?php endif; ?>
 
   <div class="page-header">
-    <div><h1>Categories</h1><div class="breadcrumb"><a href="/views/dashboard/index.php">Dashboard</a> / Categories</div></div>
+    <div><h1>Categories</h1>
+  </div>
     <button class="btn btn-primary" onclick="document.getElementById('add-cat-modal').style.display='flex'">+ Add Category</button>
   </div>
 

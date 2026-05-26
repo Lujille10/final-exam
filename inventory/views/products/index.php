@@ -80,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $errors = "Equipment name and category are required.";
         $view = 'add';
     } else {
-        // ── Check if same name + category + location already exists ──
         $locCheck = $location ?? '';
         $chk = $conn->prepare(
             "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,'')) = LOWER(?)"
@@ -91,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $chk->close();
 
         if ($existing) {
-            // ── Duplicate found: add the quantity ──
             $newQty = $existing['quantity'] + $quantity;
             $upd = $conn->prepare("UPDATE products SET quantity = ? WHERE id = ?");
             $upd->bind_param("ii", $newQty, $existing['id']);
@@ -108,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
                 $view = 'add';
             }
         } else {
-            // ── No duplicate: insert as new equipment ──
             $stmt2 = $conn->prepare("INSERT INTO products (name, description, quantity, category, location) VALUES (?, ?, ?, ?, ?)");
             $stmt2->bind_param("ssiss", $name, $description, $quantity, $category, $location);
             $result = $stmt2->execute();
@@ -145,7 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $editProduct = $stmt->get_result()->fetch_assoc();
         $stmt->close();
     } else {
-        // ── Check if another row with same name + category + location exists (excluding self) ──
         $locCheck = $location ?? '';
         $chk = $conn->prepare(
             "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,'')) = LOWER(?) AND id != ?"
@@ -156,7 +152,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $chk->close();
 
         if ($existing) {
-            // ── Merge: add this row quantity into the existing one, then delete this row ──
             $newQty = $existing['quantity'] + $quantity;
             $upd = $conn->prepare("UPDATE products SET quantity = ? WHERE id = ?");
             $upd->bind_param("ii", $newQty, $existing['id']);
@@ -173,7 +168,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
             logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
                 'Merged', 'edit', "Merged duplicate \"$name\" — qty {$existing['quantity']} → $newQty (Category: $category, Location: $location)");
         } else {
-            // ── No duplicate: normal update ──
             $stmt2 = $conn->prepare("UPDATE products SET name=?, description=?, quantity=?, category=?, location=? WHERE id=?");
             $stmt2->bind_param("ssissi", $name, $description, $quantity, $category, $location, $id);
             $result = $stmt2->execute();
@@ -248,7 +242,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
 
-<div class="form-card" style="max-width:700px;">
+<div class="form-card" style="max-width:100%;width:100%;">
   <div class="form-card-header"><h1>Equipment Details</h1></div>
   <form method="POST" class="form-card-body">
     <input type="hidden" name="form_action" value="add">
@@ -264,20 +258,15 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
                value="<?= htmlspecialchars($_POST['description'] ?? '') ?>">
       </div>
     </div>
-    <div class="form-group">
-      <label>Category *</label>
-      <select name="category" class="form-control" required>
-        <option value="">Select category</option>
-        <?php foreach ($categories as $c): ?>
-        <option value="<?= htmlspecialchars($c) ?>" <?= ($_POST['category'] ?? '') === $c ? 'selected' : '' ?>><?= htmlspecialchars($c) ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Quantity *</label>
-        <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required
-               value="<?= htmlspecialchars($_POST['quantity'] ?? '0') ?>">
+        <label>Category *</label>
+        <select name="category" class="form-control" required>
+          <option value="">Select category</option>
+          <?php foreach ($categories as $c): ?>
+          <option value="<?= htmlspecialchars($c) ?>" <?= ($_POST['category'] ?? '') === $c ? 'selected' : '' ?>><?= htmlspecialchars($c) ?></option>
+          <?php endforeach; ?>
+        </select>
       </div>
       <div class="form-group">
         <label>Location</label>
@@ -292,6 +281,14 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
         </select>
       </div>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input type="number" name="quantity" class="form-control" min="0" placeholder="0" required
+               value="<?= htmlspecialchars($_POST['quantity'] ?? '0') ?>">
+      </div>
+      <div class="form-group"></div><!-- spacer -->
+    </div>
     <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem;">
       <a href="?" class="btn btn-secondary">Cancel</a>
       <button type="submit" class="btn btn-primary">💾 Save Equipment</button>
@@ -305,7 +302,7 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
   <div><h1>Edit Equipment</h1></div>
   <a href="?" class="btn btn-secondary">← Back</a>
 </div>
-<div class="form-card" style="max-width:700px;">
+<div class="form-card" style="max-width:100%;width:100%;">
   <div class="form-card-header">
     <h1>Update: <?= htmlspecialchars($editProduct['name']) ?></h1>
   </div>
@@ -339,17 +336,20 @@ $icons = ['📷','🪣','🔬','🧤','🚤','🔭','⚓','🎣','🦺','🛟'];
                value="<?= htmlspecialchars($_POST['quantity'] ?? $editProduct['quantity']) ?>">
       </div>
     </div>
-    <div class="form-group">
-      <label>Location</label>
-      <select name="location" class="form-control">
-        <option value="">— Select Location —</option>
-        <?php
-        $locations = ['Storage A','Storage B','Storage C','Boat 1','Boat 2','Lab Room','Harbor','Dive Room','Equipment Bay','Field Station'];
-        $selLoc = $_POST['location'] ?? $editProduct['location'] ?? '';
-        foreach ($locations as $loc): ?>
-        <option value="<?= htmlspecialchars($loc) ?>" <?= $selLoc === $loc ? 'selected' : '' ?>><?= htmlspecialchars($loc) ?></option>
-        <?php endforeach; ?>
-      </select>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Location</label>
+        <select name="location" class="form-control">
+          <option value="">— Select Location —</option>
+          <?php
+          $locations = ['Storage A','Storage B','Storage C','Boat 1','Boat 2','Lab Room','Harbor','Dive Room','Equipment Bay','Field Station'];
+          $selLoc = $_POST['location'] ?? $editProduct['location'] ?? '';
+          foreach ($locations as $loc): ?>
+          <option value="<?= htmlspecialchars($loc) ?>" <?= $selLoc === $loc ? 'selected' : '' ?>><?= htmlspecialchars($loc) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="form-group"></div><!-- spacer -->
     </div>
     <div style="display:flex;gap:0.75rem;margin-top:0.5rem;">
       <button type="submit" class="btn btn-warning">💾 Update Equipment</button>

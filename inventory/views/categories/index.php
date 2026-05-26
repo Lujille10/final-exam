@@ -38,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         if (in_array($catName, $existing)) {
             $errors = "Category \"$catName\" already exists.";
         } else {
-            $result = $pc->add("__cat_placeholder__", $catDesc, 0, 0, $catName);
+            // price removed — add($name, $description, $quantity, $category)
+            $result = $pc->add("__cat_placeholder__", $catDesc, 0, $catName);
             if ($result) {
                 $message = "Category \"$catName\" added successfully!";
                 logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
@@ -66,7 +67,7 @@ if (isset($_GET['delete_cat']) && !empty($_GET['delete_cat'])) {
 // ── EDIT CATEGORY ─────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === 'edit_cat') {
     $oldName = trim($_POST['old_cat_name'] ?? '');
-    $newName = trim($_POST['cat_name'] ?? '');
+    $newName = trim($_POST['cat_name']     ?? '');
     if (empty($newName)) {
         $errors = "Category name is required.";
     } else {
@@ -74,7 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $updated  = 0;
         foreach ($allProds as $p) {
             if ($p['category'] === $oldName) {
-                $pc->update((int)$p['id'], $p['name'], $p['description'], (int)$p['quantity'], (float)$p['price'], $newName);
+                // price removed — update($id, $name, $description, $quantity, $category)
+                $pc->update((int)$p['id'], $p['name'], $p['description'], (int)$p['quantity'], $newName);
                 $updated++;
             }
         }
@@ -121,10 +123,7 @@ $conn->close();
   <?php if ($errors):  ?><div class="alert alert-danger"><?= htmlspecialchars($errors) ?></div><?php endif; ?>
 
   <div class="page-header">
-    <div>
-      <h1>Categories</h1>
-      
-    </div>
+    <div><h1>Categories</h1></div>
     <button class="btn btn-primary" onclick="document.getElementById('add-cat-modal').style.display='flex'">+ Add Category</button>
   </div>
 

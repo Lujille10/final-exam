@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
             $upd->close();
 
             if ($result) {
-                $message = "\"{$name}\" already exists in this category and location — quantity updated from ...";
+                $message = "\"{$name}\" already exists in this category and location — quantity updated from {$existing['quantity']} to $newQty.";
                 $view = 'list';
                 logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
                     'Updated', 'edit', "Auto-merged duplicate \"$name\" — qty {$existing['quantity']} → $newQty (Category: $category, Location: $location)");
@@ -145,24 +145,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         $editProduct = $stmt->get_result()->fetch_assoc();
         $stmt->close();
     } else {
-        $stmt2 = $conn->prepare("UPDATE products SET name=?, description=?, quantity=?, category=?, location=? WHERE id=?");
-        $stmt2->bind_param("ssissi", $name, $description, $quantity, $category, $location, $id);
-        $result = $stmt2->execute();
-        $stmt2->close();
+        // ── Check if another row with same name + category + location exists (excluding self) ──
+        $locCheck = $location ?? '';
+        $chk = $conn->prepare(
+            "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,\'\')) = LOWER(?) AND id != ?"
+        );
+        $chk->bind_param("sssi", $name, $category, $locCheck, $id);
+        $chk->execute();
+        $existing = $chk->get_result()->fetch_assoc();
+        $chk->close();
 
-        if ($result) {
-            $message = "Equipment updated!";
+        if ($existing) {
+            // ── Merge: add this row quantity into the existing one, then delete this row ──
+            $newQty = $existing['quantity'] + $quantity;
+            $upd = $conn->prepare("UPDATE products SET quantity = ? WHERE id = ?");
+            $upd->bind_param("ii", $newQty, $existing['id']);
+            $upd->execute();
+            $upd->close();
+
+            $del = $conn->prepare("DELETE FROM products WHERE id = ?");
+            $del->bind_param("i", $id);
+            $del->execute();
+            $del->close();
+
+            $message = "Merged into existing \"$name\" — quantity updated from {$existing['quantity']} to $newQty.";
             $view = 'list';
             logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
-                'Edited', 'edit', "Updated equipment \"$name\"");
+                'Merged', 'edit', "Merged duplicate \"$name\" — qty {$existing['quantity']} → $newQty (Category: $category, Location: $location)");
         } else {
-            $errors = "Failed to update.";
-            $view = 'edit';
-            $stmt4 = $conn->prepare("SELECT * FROM products WHERE id = ?");
-            $stmt4->bind_param("i", $id);
-            $stmt4->execute();
-            $editProduct = $stmt4->get_result()->fetch_assoc();
-            $stmt4->close();
+            // ── No duplicate: normal update ──
+            $stmt2 = $conn->prepare("UPDATE products SET name=?, description=?, quantity=?, category=?, location=? WHERE id=?");
+            $stmt2->bind_param("ssissi", $name, $description, $quantity, $category, $location, $id);
+            $result = $stmt2->execute();
+            $stmt2->close();
+
+            if ($result) {
+                $message = "Equipment updated!";
+                $view = 'list';
+                logActivity($conn, $_SESSION['user_id'], $_SESSION['username'] ?? 'Admin',
+                    'Edited', 'edit', "Updated equipment \"$name\"");
+            } else {
+                $errors = "Failed to update.";
+                $view = 'edit';
+                $stmt4 = $conn->prepare("SELECT * FROM products WHERE id = ?");
+                $stmt4->bind_param("i", $id);
+                $stmt4->execute();
+                $editProduct = $stmt4->get_result()->fetch_assoc();
+                $stmt4->close();
+            }
         }
     }
 }

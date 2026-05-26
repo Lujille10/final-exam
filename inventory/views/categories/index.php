@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
             } else { $errors = "Failed to add category."; }
             $stmt->close();
         }
-        if (isset($chk) && !$chk->result_metadata() === false) $chk->close();
+
     }
 }
 

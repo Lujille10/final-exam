@@ -148,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_action'] ?? '') === '
         // ── Check if another row with same name + category + location exists (excluding self) ──
         $locCheck = $location ?? '';
         $chk = $conn->prepare(
-            "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,\'\')) = LOWER(?) AND id != ?"
+            "SELECT id, quantity FROM products WHERE LOWER(name) = LOWER(?) AND LOWER(category) = LOWER(?) AND LOWER(COALESCE(location,'')) = LOWER(?) AND id != ?"
         );
         $chk->bind_param("sssi", $name, $category, $locCheck, $id);
         $chk->execute();
